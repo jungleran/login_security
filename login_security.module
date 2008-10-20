@@ -2,7 +2,8 @@
 // $Id$
 
 /**
- * @file Login Security
+ * @file
+ * Login Security
  *
  * GPL published.. if you don't have a copy of the license, search for it, it's free
  * Copyrighted by ilo@reversing.org
@@ -22,21 +23,10 @@ define('LOGIN_SECURITY_HOST_HARD_BANNED', "The IP address <em>%ip</em> is banned
 define('LOGIN_SECURITY_USER_BLOCKED', "The user <em>%username</em> has been blocked due to failed login attempts.");
 define('LOGIN_SECURITY_USER_BLOCKED_EMAIL', FALSE);
 define('LOGIN_SECURITY_USER_BLOCKED_EMAIL_SUBJECT', "Security action: The user %username has been blocked.");
-define('LOGIN_SECURITY_USER_BLOCKED_EMAIL_BODY', "The user %username has been blocked at %site due to the amount of failed login attempts. Please check the logs for more information.");
+define('LOGIN_SECURITY_USER_BLOCKED_EMAIL_BODY', "The user %username (%edit_uri) has been blocked at %site due to the amount of failed login attempts. Please check the logs for more information.");
 
- /**
- * Implementation of hook_help()
- */
-function login_security_help($section) {
-  switch ($section) {
-    case 'admin/modules#description':
-      // This description is shown in the listing at admin/modules.
-      return t('Adds security options to the login flow of the site.');
-  }
-}
-
- /**
- * Implementation of hook_cron()
+/**
+ * Implementation of hook_cron().
  */
 function login_security_cron() {
 // calc expiring time of login security tracked entries
@@ -74,7 +64,7 @@ function login_security_user($op, &$edit, &$account, $category = NULL) {
       // Remove any notice message.. Damm.. I have to add more code to clean the message than to work for security :D
       if ((variable_get('login_security_notice_attempts_available', LOGIN_SECURITY_NOTICE_ATTEMPTS_AVAILABLE)) && (isset($_SESSION['messages']['status']))) {
         foreach ($_SESSION['messages']['status'] as $mid => $mstr) {
-          if (substr($mstr, 0, 23) == "<!-- login_security -->") {
+          if (drupal_substr($mstr, 0, 23) == "<!-- login_security -->") {
             unset($_SESSION['messages']['status'][$mid]);
           }
         }
@@ -188,8 +178,8 @@ function login_security_build_admin_form() {
     '#weight' => 0,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
+    '#description' => t("Allowed placeholders for notifications include the following: %date, %ip, %username, %email, %uid, %site, %uri, %edit_uri, %hard_block_attempts, %soft_block_attempts, %user_block_attempts, %user_ip_current_count, %ip_current_count, %user_current_count, %tracking_time")
   );
-
   $form['login_security']['Notifications']['login_security_notice_attempts_available'] = array(
     '#type' => 'checkbox',
     '#title' => t('Notify the user after any failed login attempt'),
@@ -228,7 +218,7 @@ function login_security_build_admin_form() {
 
   $form['login_security']['Notifications']['login_security_user_blocked_email'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Send email message to the admin when a user is blocked'),
+    '#title' => t('Send email message to the admin (uid 1) when a user is blocked'),
     '#default_value' => variable_get('login_security_user_blocked_email', LOGIN_SECURITY_USER_BLOCKED_EMAIL),
   );
   $form['login_security']['Notifications']['login_security_user_blocked_email_subject'] = array(
@@ -364,7 +354,7 @@ function login_user_block_ip($variables) {
  */
 function login_user_block_user_name($variables) {
   if ($variables['%uid'] > 1) {
-    form_set_error('void', t(variable_get('login_security_user_blocked', LOGIN_SECURITY_USER_BLOCKED), $variables) );
+    form_set_error('void', t(variable_get('login_security_user_blocked', LOGIN_SECURITY_USER_BLOCKED), $variables));
     // Modifying the user table is not an option so it disables the user hooks. Need to do
     // firing the hook so user_notifications can be used.
     // db_query("UPDATE {users} SET status = 0 WHERE uid = %d", $uid);
@@ -376,12 +366,11 @@ function login_user_block_user_name($variables) {
     watchdog('security', t('Blocked user %name: with id %uid due to security configuration', $variables));
 
     // Send admin email
-    if (variable_get('login_security_user_blocked_email', LOGIN_SECURITY_USER_BLOCKED_EMAIL) ) {
+    if (variable_get('login_security_user_blocked_email', LOGIN_SECURITY_USER_BLOCKED_EMAIL)) {
       $from = variable_get('site_mail', ini_get('sendmail_from'));
       $headers = array(
         'X-Mailer' => 'Drupal Login Security module http://drupal.org/project/login_security',
       );
-      $variables = _login_security_get_variables_by_name($name);
       $admin_mail =  db_result(db_query("SELECT mail FROM {users} WHERE uid = 1"));
       $subject = strtr(variable_get('login_security_user_blocked_email_subject', LOGIN_SECURITY_USER_BLOCKED_EMAIL_SUBJECT), $variables);
       $body = strtr(variable_get('login_security_user_blocked_email_mody', LOGIN_SECURITY_USER_BLOCKED_EMAIL_BODY), $variables);

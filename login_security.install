@@ -7,7 +7,7 @@ function login_security_install() {
   case 'mysqli':
     db_query("CREATE TABLE {login_security_track} (".
        "id int unsigned NOT NULL auto_increment, ".
-       "host varchar(15) NOT NULL, ".
+       "host varchar(39) NOT NULL, ".
        "name varchar(64) NOT NULL, ".
        "timestamp int(11) unsigned NOT NULL, ".
        "PRIMARY KEY (id,name,host), ".
@@ -19,7 +19,7 @@ function login_security_install() {
   case 'pgsql':
     db_query("CREATE TABLE {login_security_track} (".
        "id serial NOT NULL, ".
-       "host varchar(15) NOT NULL, ".
+       "host varchar(39) NOT NULL, ".
        "name varchar(64) NOT NULL, ".
        "timestamp int_unsigned NOT NULL, ".
        "PRIMARY KEY (id,name,host) ".
@@ -32,6 +32,22 @@ function login_security_install() {
     drupal_set_message(t('Created security table'));
     break;
   }
+}
+
+/**
+ * Support IPv6 length addresses.
+ *
+ * @return array
+ */
+function login_security_update_5000() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+  case 'mysql':
+  case 'mysqli':
+    $ret[] = update_sql("ALTER TABLE {login_security_track} CHANGE host host VARCHAR(39) NOT NULL");
+    break;
+  }
+  return $ret;
 }
 
 function login_security_uninstall() {
