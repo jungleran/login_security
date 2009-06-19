@@ -99,6 +99,23 @@ function login_security_form_alter($form_id, &$form) {
     case 'user_login_block':
       // Attach a new validatdor for the name field
       $form['name']['#validate']['login_security_validate'] = array();
+      // Change to do soft-blocking here, see issue: http://drupal.org/node/493164
+      // We alter the form here, and still show the message in the validation
+      $variables = _login_security_get_variables_by_name(check_plain($form['name']['#value']));
+      //drupal_set_message("<pre>".print_r($form,1)."</pre>");
+      // Check for host login attempts: Soft
+      if ($variables['%soft_block_attempts'] >= 1) {
+        if ($variables['%ip_current_count'] >= $variables['%soft_block_attempts']) {
+          //Alter current form, so user will not be able to submit it
+          // this loop is instead of doing t() because t() can only translate static strings, not variables.
+          foreach ($variables as $key => $value) {
+            $variables[$key] = theme('placeholder', $value);
+          }
+          form_set_error('submit', strtr(variable_get('login_security_host_soft_banned',  LOGIN_SECURITY_HOST_SOFT_BANNED), $variables));
+          unset($form['submit']);
+        }
+      }
+
       break;
     case 'user_admin_settings':
       if (user_access('administer users')) {
@@ -291,14 +308,6 @@ function login_security_validate($form_item) {
     if ($variables['%ip_current_count'] > $variables['%hard_block_attempts']) {
       // block the host mip_address()
       login_user_block_ip($variables);
-    }
-  }
-
-  // Check for host login attempts: Soft
-  if ($variables['%soft_block_attempts'] >= 1) {
-    if ($variables['%ip_current_count'] > $variables['%soft_block_attempts']) {
-      form_set_error('submit', t(variable_get('login_security_host_soft_banned',  LOGIN_SECURITY_HOST_SOFT_BANNED), $variables));
-      drupal_goto(drupal_get_destination());
     }
   }
 
