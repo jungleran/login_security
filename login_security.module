@@ -10,8 +10,6 @@
  */
 
 define('LOGIN_SECURITY_TRACK_TIME', 0);
-define('LOGIN_SECURITY_BASE_TIME', 0);
-define('LOGIN_SECURITY_DELAY_INCREASE', 0);
 define('LOGIN_SECURITY_USER_WRONG_COUNT', 0);
 define('LOGIN_SECURITY_HOST_WRONG_COUNT', 0);
 define('LOGIN_SECURITY_HOST_WRONG_COUNT_HARD', 0);
@@ -144,22 +142,6 @@ function login_security_build_admin_form() {
     '#description' => t('Enter the time that each failed login attempt is kept for future computing.'),
     '#field_suffix' => '<kbd>'. t('Hours') .'</kbd>'
   );
-  $form['login_security_delay_base_time'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Login delay base time'),
-    '#default_value' => variable_get('login_security_delay_base_time', LOGIN_SECURITY_BASE_TIME),
-    '#size' => 3,
-    '#maxlength' => 3,
-    '#description' => t('Enter the base time for login delay'),
-    '#field_suffix' => '<kbd>'. t('Seconds') .'</kbd>'
-  );
-  $form['login_security_delay_increase'] = array(
-    '#type' => 'radios',
-    '#title' => t('Increase delay for each attempt?'),
-    '#default_value' => variable_get('login_security_delay_increase', LOGIN_SECURITY_DELAY_INCREASE),
-    '#options' => array(1 => 'Yes', 0 => 'No'),
-    '#description' => t('Computed as (base time) x (login attempts) for that user.'),
-  );
   $form['login_security_user_wrong_count'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum number of login failures before blocking a user'),
@@ -291,16 +273,6 @@ function login_security_validate($form_item) {
 
   // Populate variables to be used in any module message or login operation
   $variables = _login_security_get_variables_by_name($name);
-
-  // Start with login Delay
-  if ($delay = variable_get('login_security_delay_base_time', LOGIN_SECURITY_USER_BASE_TIME)) {
-    $secs = (variable_get('login_security_delay_increase', LOGIN_SECURITY_DELAY_INCREASE) == 1) ? intval($variables['%user_ip_current_count']-1) * intval($delay) : intval($delay);
-    if ($secs >= ini_get('max_execution_time')) {
-      $secs = ini_get('max_execution_time') - 3;
-    }
-
-    @sleep($secs);
-  }
 
   // Check for host login attempts: Hard
   if ($variables['%hard_block_attempts'] >= 1) {

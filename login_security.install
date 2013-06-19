@@ -52,7 +52,6 @@ function login_security_update_5000() {
 function login_security_uninstall() {
   drupal_set_message(t('Removing security options'));
   variable_del('login_security_track_time');
-  variable_del('login_security_delay_base_time');
   variable_del('login_security_user_wrong_count');
   variable_del('login_security_host_wrong_count');
   variable_del('login_security_host_wrong_count_hard');
@@ -64,8 +63,15 @@ function login_security_uninstall() {
   variable_del('login_security_user_blocked_email');
   variable_del('login_security_user_blocked_email_subject');
   variable_del('login_security_user_blocked_email_body');
-  variable_del('login_security_delay_increase');
   variable_del('login_security_last_login_timestamp');
   variable_del('login_security_last_access_timestamp');
   db_query("DROP TABLE {login_security_track}");
+}
+
+/**
+ * Remove the option to have a login punishment for login failures for DoS.
+ */
+function login_security_update_5001() {
+  variable_del('login_security_delay_base_time');
+  variable_del('login_security_delay_increase');
 }
