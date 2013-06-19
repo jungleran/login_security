@@ -75,13 +75,13 @@ function login_security_user($op, &$edit, &$account, $category = NULL) {
       }
 
       // On success login remove any temporary protection for the IP address and the username
-      db_query("DELETE FROM {login_security_track} WHERE name = '%s' and host = '%s'", check_plain($edit['name']), mip_address());
+      db_query("DELETE FROM {login_security_track} WHERE name = '%s' and host = '%s'", $edit['name'], mip_address());
       break;
 
     case 'update':
       // The update case can be launched by the user or by any user administrator
       // On update, remove only the unser information tracked
-      db_query("DELETE FROM {login_security_track} WHERE name = '%s'", check_plain($edit['name']));
+      db_query("DELETE FROM {login_security_track} WHERE name = '%s'", $edit['name']);
       break;
       // Cron will clean the forgotten tracking entries, including the deleted users's.
   }
@@ -262,7 +262,7 @@ function login_security_build_admin_form() {
  */
 function login_security_validate($form_item) {
   // Sanitize user input
-  $name = check_plain($form_item['#value']);
+  $name = $form_item['#value'];
   // Null username should not be tracked
   if (!strlen($name)) {
     return;
@@ -403,5 +403,5 @@ function mip_address() {
       $ip_address = array_pop(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
     }
   }
-  return check_plain($ip_address);
+  return $ip_address;
 }
