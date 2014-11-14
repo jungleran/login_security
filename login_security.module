@@ -255,14 +255,18 @@ function login_security_validate($form, &$form_state) {
       $notice_user = variable_get('login_security_notice_attempts_available', LOGIN_SECURITY_NOTICE_ATTEMPTS_AVAILABLE);
       if (($notice_user == TRUE) && ($variables['@user_block_attempts'] > 0) && $variables['@user_block_attempts'] >= $variables['@user_current_count']) {
         $message_raw = variable_get('login_security_notice_attempts_message', LOGIN_SECURITY_NOTICE_ATTEMPTS_MESSAGE);
-        $message = array('message' => $message_raw, 'variables' => $variables);
 
         // Simple flag that can be changed using hook_alter (see below).
         $display_block_attempts = TRUE;
 
         // Allow other module to change the flag, or even the message displayed,
         // with a custom logic.
-        drupal_alter('login_security_display_block_attempts', $display_block_attempts, $variables['@user_current_count'], $message);
+        drupal_alter('login_security_display_block_attempts', $message_raw, $display_block_attempts, $variables['@user_current_count']);
+
+        $message = array(
+          'message' => $message_raw,
+          'variables' => $variables
+        );
 
         // This loop is used instead of doing t() because t() can only
         // translate static strings, not variables.
